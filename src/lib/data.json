@@ -1,0 +1,23 @@
+{
+  "tenantTypes": ["Enterprise", "SMB", "Consultancy", "Government"],
+  "industries": ["Manufacturing", "Financial Services", "Healthcare", "Technology", "Government"],
+  "timezones": [
+    { "label": "Asia/Dubai (UTC+4)", "value": "Asia/Dubai" },
+    { "label": "UTC", "value": "UTC" },
+    { "label": "Europe/London", "value": "Europe/London" },
+    { "label": "Asia/Kolkata", "value": "Asia/Kolkata" }
+  ],
+  "currencies": ["AED", "USD", "EUR", "GBP", "INR"],
+  "verificationDocs": [
+    "VAT Certificate",
+    "Cybersecurity Cert",
+    "Environmental Cert",
+    "Fire Safety Cert",
+    "NOC",
+    "Trade License",
+    "Insurance Policy",
+    "Bank Guarantee",
+    "Company Profile",
+    "Sanitation Cert"
+  ]
+}

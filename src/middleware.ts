@@ -1,17 +1,22 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { verifyJWT } from "./lib/auth";
+import { verifyJWT } from "./lib/auth"; // MUST be Edge-safe (jose/WebCrypto)
 
 const COOKIE = "vg.session";
+
+const PUBLIC_PATHS = new Set<string>([
+  "/", "/login", "/privacy", "/terms", "/api/auth",
+]);
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Public paths
-  if (pathname.startsWith("/login") || pathname.startsWith("/api/auth")) {
+  // allow public paths and /api/auth/*
+  if (PUBLIC_PATHS.has(pathname) || pathname.startsWith("/api/auth/")) {
     return NextResponse.next();
   }
 
+  // read token for protected paths
   const token = req.cookies.get(COOKIE)?.value;
   if (!token) {
     const url = req.nextUrl.clone();
@@ -21,20 +26,20 @@ export async function middleware(req: NextRequest) {
   }
 
   try {
-    const session = await verifyJWT(token);
+    const session = await verifyJWT(token); // Edge-safe implementation
     const isSuper = session.role === "SUPER_ADMIN";
 
-    // Block tenants from /admin
-    if (pathname.startsWith("/admin") && !isSuper) {
+    // if an authenticated user hits /login, send them to their dashboard (nice UX)
+    if (pathname === "/login") {
       const url = req.nextUrl.clone();
-      url.pathname = "/organizations";
+      url.pathname = isSuper ? "/admin" : "/organizations";
       return NextResponse.redirect(url);
     }
 
-    // Optional opinionated defaults:
-    if (pathname === "/") {
+    // block tenants from /admin
+    if (pathname.startsWith("/admin") && !isSuper) {
       const url = req.nextUrl.clone();
-      url.pathname = isSuper ? "/admin" : "/organizations";
+      url.pathname = "/organizations";
       return NextResponse.redirect(url);
     }
 
@@ -47,5 +52,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next|favicon.ico|assets|public).*)"],
+  matcher: ["/((?!_next|favicon.ico|assets|public|.*\\..*|api/(?!auth)).*)"],
 };

@@ -1,7 +1,5 @@
 // src/app/api/organizations/route.ts
 
-// We’re handling writes here too, so keep this dynamic.
-export const dynamic = "force-static";
 export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";

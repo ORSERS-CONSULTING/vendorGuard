@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import type { Organization } from "@/lib/org";
 import { StatusDot } from "./StatusDot";
 import { PlanBadge } from "./PlanBadge";
-import { List, Table2, Download } from "lucide-react";
+import { List, Table2, Download, ChevronDown } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -19,13 +19,19 @@ import {
 } from "@/components/ui/table";
 
 type ViewMode = "list" | "table";
+type GroupKey = "none" | "status" | "plan" | "country" | "type";
+type Grouped = Array<{ label: string; count: number; items: Organization[] }>;
 
 export function OrgResults({
   data,
+  grouped = null,
+  groupBy = "none",
   defaultView = "table",
   className,
 }: {
   data: Organization[];
+  grouped?: Grouped | null; // <-- new: pre-grouped sections (or null)
+  groupBy?: GroupKey; // <-- new: which field we grouped by
   defaultView?: ViewMode;
   className?: string;
 }) {
@@ -46,29 +52,15 @@ export function OrgResults({
   }, [view]);
 
   const exportCsv = React.useCallback(() => {
-    const headers = [
-      "Code",
-      "Name",
-      "Type",
-      "Industry",
-      "Plan",
-      "Country",
-      "Admin",
-      "Status",
-      "Timezone",
-      "Currency",
-    ];
+    // export lean columns only (what the table shows)
+    const headers = ["Name", "Code", "Plan", "Status", "Country", "Admin"];
     const rows = data.map((o) => [
-      o.code ?? "",
       o.name ?? "",
-      o.type ?? "",
-      o.industry ?? "",
+      o.code ?? "",
       o.plan ?? "",
+      o.status ?? "",
       o.country ?? "",
       o.admin ?? "",
-      o.status ?? "",
-      o.timezone ?? "",
-      o.currency ?? "",
     ]);
     const csv = [headers, ...rows]
       .map((r) =>
@@ -91,10 +83,16 @@ export function OrgResults({
   }, [data]);
 
   return (
-    <Card className={cn("overflow-hidden border-border/60 shadow-none", className)}>
+    <Card
+      className={cn("overflow-hidden border-border/60 shadow-none", className)}
+    >
       {/* Toolbar: view toggle + export */}
       <div className="flex items-center justify-end gap-2 border-b px-5 py-2">
-        <div className="inline-flex rounded-md border bg-background p-0.5" role="tablist" aria-label="Results view">
+        <div
+          className="inline-flex rounded-md border bg-background p-0.5"
+          role="tablist"
+          aria-label="Results view"
+        >
           <Button
             type="button"
             variant={view === "list" ? "default" : "ghost"}
@@ -134,8 +132,74 @@ export function OrgResults({
         </Button>
       </div>
 
-      {view === "list" ? <ListView data={data} /> : <TableView data={data} />}
+      {/* Grouped view uses same list/table modes but inside collapsible sections */}
+      {groupBy !== "none" && grouped ? (
+        <GroupedResults groups={grouped} view={view} />
+      ) : view === "list" ? (
+        <ListView data={data} />
+      ) : (
+        <TableView data={data} />
+      )}
     </Card>
+  );
+}
+
+/* ------------------------- Grouped Sections -------------------------- */
+
+function GroupedResults({ groups, view }: { groups: Grouped; view: ViewMode }) {
+  if (!groups?.length) {
+    return (
+      <div className="px-5 py-12 text-center text-sm text-muted-foreground">
+        No organizations match your filters.
+      </div>
+    );
+  }
+
+  return (
+    <div className="divide-y">
+      {groups.map((g) => (
+        <GroupSection key={g.label} label={g.label} count={g.count}>
+          {view === "list" ? (
+            <ListView data={g.items} />
+          ) : (
+            <TableView data={g.items} />
+          )}
+        </GroupSection>
+      ))}
+    </div>
+  );
+}
+
+function GroupSection({
+  label,
+  count,
+  children,
+}: {
+  label: string;
+  count: number;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = React.useState(true);
+  return (
+    <section>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="sticky top-0 z-10 flex w-full items-center justify-between gap-3 bg-muted/40 px-5 py-2 text-left"
+        aria-expanded={open}
+      >
+        <div className="flex items-center gap-2">
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 transition-transform",
+              open ? "rotate-0" : "-rotate-90"
+            )}
+          />
+          <span className="font-medium">{label || "—"}</span>
+          <span className="text-xs text-muted-foreground">({count})</span>
+        </div>
+      </button>
+      {open && <div className="pt-2">{children}</div>}
+    </section>
   );
 }
 
@@ -144,7 +208,7 @@ export function OrgResults({
 function ListView({ data }: { data: Organization[] }) {
   if (!data?.length) {
     return (
-      <div className="px-5 py-12 text-center text-sm text-muted-foreground">
+      <div className="px-5 py-8 text-center text-sm text-muted-foreground">
         No organizations match your filters.
       </div>
     );
@@ -175,18 +239,17 @@ function ListView({ data }: { data: Organization[] }) {
               </div>
             </div>
 
-            {/* Row 2 meta */}
+            {/* Row 2 meta (lean) */}
             <div className="mt-1 grid grid-cols-[1fr_auto] items-center gap-3 text-xs text-muted-foreground">
               <div className="min-w-0 truncate">
                 <span className="font-mono">{o.code}</span>
                 <span className="mx-2">•</span>
-                <span className="truncate">{o.type ?? "—"}</span>
-                <span className="mx-2">•</span>
-                <span className="truncate">{o.industry ?? "—"}</span>
-                <span className="mx-2">•</span>
                 <span className="truncate">{o.country ?? "—"}</span>
               </div>
-              <div className="hidden max-w-[220px] truncate md:block" title={String(o.admin ?? "")}>
+              <div
+                className="hidden max-w-[240px] truncate md:block"
+                title={String(o.admin ?? "")}
+              >
                 {o.admin ?? "—"}
               </div>
             </div>
@@ -198,49 +261,47 @@ function ListView({ data }: { data: Organization[] }) {
 }
 
 /* ----------------------------- Table View ---------------------------- */
+/* Lean columns: Name, Code, Plan, Status, Country, Admin */
 
 function TableView({ data }: { data: Organization[] }) {
   return (
     <div className="overflow-x-auto px-5 py-3">
-      <Table className="min-w-[1100px] text-sm">
+      <Table className="min-w-[900px] text-sm">
         <TableHeader className="sticky top-0 z-10 bg-background">
           <TableRow className="hover:bg-transparent">
-            <TableHead className="w-24">Code</TableHead>
-            <TableHead className="w-[260px]">Name</TableHead>
-            <TableHead className="w-32">Type</TableHead>
-            <TableHead className="w-40">Industry</TableHead>
+            <TableHead className="w-[320px]">Name</TableHead>
+            <TableHead className="w-28">Code</TableHead>
             <TableHead className="w-40">Plan</TableHead>
-            <TableHead className="w-40">Country</TableHead>
-            <TableHead className="w-[220px]">Admin Person</TableHead>
             <TableHead className="w-48">Status</TableHead>
-            <TableHead className="w-48">Timezone</TableHead>
-            <TableHead className="w-28">Currency</TableHead>
+            <TableHead className="w-40">Country</TableHead>
+            <TableHead className="w-[260px]">Admin</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.map((o) => (
             <TableRow key={o.code} className="hover:bg-muted/40">
-              <TableCell className="font-medium">{o.code}</TableCell>
               <TableCell className="text-primary underline-offset-4 hover:underline cursor-pointer">
                 {o.name ?? "—"}
               </TableCell>
-              <TableCell>{o.type ?? "—"}</TableCell>
-              <TableCell>{o.industry ?? "—"}</TableCell>
+              <TableCell className="font-mono">{o.code}</TableCell>
               <TableCell>
                 <PlanBadge plan={o.plan} />
               </TableCell>
-              <TableCell>{o.country ?? "—"}</TableCell>
-              <TableCell className="truncate">{o.admin ?? "—"}</TableCell>
               <TableCell>
                 <StatusDot status={o.status} />
               </TableCell>
-              <TableCell className="whitespace-nowrap">{o.timezone ?? "—"}</TableCell>
-              <TableCell className="whitespace-nowrap">{o.currency ?? "—"}</TableCell>
+              <TableCell className="whitespace-nowrap">
+                {o.country ?? "—"}
+              </TableCell>
+              <TableCell className="truncate">{o.admin ?? "—"}</TableCell>
             </TableRow>
           ))}
           {!data.length && (
             <TableRow>
-              <TableCell colSpan={10} className="py-12 text-center text-sm text-muted-foreground">
+              <TableCell
+                colSpan={6}
+                className="py-12 text-center text-sm text-muted-foreground"
+              >
                 No organizations match your filters.
               </TableCell>
             </TableRow>

@@ -3,12 +3,21 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { OrgToolbar } from "@/components/organizations/OrgToolbar";
-import { OrgFilters, type FilterState } from "@/components/organizations/OrgFilters";
+import {
+  OrgFilters,
+  type FilterState,
+} from "@/components/organizations/OrgFilters";
 import { NewOrgDialog } from "@/components/organizations/NewOrgDialog";
 import type { Organization } from "@/lib/org";
 import { Button } from "@/components/ui/button";
 import { PanelLeft } from "lucide-react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { OrgResults } from "@/components/organizations/OrgResults";
 
 type OrdsCollection<T> = { items: T[] } & Partial<{
@@ -20,19 +29,26 @@ type OrdsCollection<T> = { items: T[] } & Partial<{
 
 type FilterFacet = { value: string; count: number };
 type FiltersResponse = {
-  facets: { types: FilterFacet[]; industries: FilterFacet[]; plans: FilterFacet[] };
+  facets: {
+    types: FilterFacet[];
+    industries: FilterFacet[];
+    plans: FilterFacet[];
+  };
   asOf: string;
 };
 
 type NewOrgForm = {
   name: string;
-  country: string;            // country name (DB maps to ID)
-  plan: string;               // plan name (DB maps to ID)
+  country: string;
+  plan: string;
   contactPerson: string;
   contactEmail: string;
   mobile?: string;
   international: boolean;
 };
+
+// ── NEW: grouping key type
+type GroupKey = "none" | "status" | "plan" | "country" | "type";
 
 export default function OrganizationsPage() {
   // UI state
@@ -44,6 +60,7 @@ export default function OrganizationsPage() {
   });
   const [openFilters, setOpenFilters] = useState(false);
   const [openNew, setOpenNew] = useState(false);
+  const [groupBy, setGroupBy] = useState<GroupKey>("none"); // ← NEW
 
   // Dynamic rows + loading/error
   const [rows, setRows] = useState<Organization[]>([]);
@@ -59,7 +76,10 @@ export default function OrganizationsPage() {
 
   // --- data loaders ---
   async function loadOrganizations(signal?: AbortSignal) {
-    const res = await fetch(`/api/organizations`, { cache: "no-store", signal });
+    const res = await fetch(`/api/organizations`, {
+      cache: "no-store",
+      signal,
+    });
     if (!res.ok) throw new Error(`Upstream ${res.status}`);
     const json = (await res.json()) as OrdsCollection<Organization>;
     setRows(json.items ?? []);
@@ -96,7 +116,8 @@ export default function OrganizationsPage() {
       try {
         await loadFilters(ac.signal);
       } catch (e: any) {
-        if (e?.name !== "AbortError") console.error("Failed to fetch filters", e);
+        if (e?.name !== "AbortError")
+          console.error("Failed to fetch filters", e);
       }
     })();
     return () => ac.abort();
@@ -112,14 +133,43 @@ export default function OrganizationsPage() {
               .includes(query.toLowerCase())
           : true
       )
-      .filter((o) => (filters.types.size ? filters.types.has((o.type ?? "") as any) : true))
-      .filter((o) => (filters.industries.size ? filters.industries.has((o.industry ?? "") as any) : true))
-      .filter((o) => (filters.plans.size ? filters.plans.has((o.plan ?? "") as any) : true));
+      .filter((o) =>
+        filters.types.size ? filters.types.has((o.type ?? "") as any) : true
+      )
+      .filter((o) =>
+        filters.industries.size
+          ? filters.industries.has((o.industry ?? "") as any)
+          : true
+      )
+      .filter((o) =>
+        filters.plans.size ? filters.plans.has((o.plan ?? "") as any) : true
+      );
   }, [rows, query, filters]);
+
+  // ── NEW: compute grouped sections from tableData
+  const grouped = useMemo(() => {
+    if (groupBy === "none") return null;
+
+    const keyOf = (o: Organization) =>
+      (groupBy === "status" && (o.status ?? "—")) ||
+      (groupBy === "plan" && (o.plan ?? "—")) ||
+      (groupBy === "country" && (o.country ?? "—")) ||
+      (groupBy === "type" && (o.type ?? "—")) ||
+      "—";
+
+    const map = new Map<string, Organization[]>();
+    for (const r of tableData) {
+      const k = keyOf(r);
+      if (!map.has(k)) map.set(k, []);
+      map.get(k)!.push(r);
+    }
+    return Array.from(map.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([label, items]) => ({ label, count: items.length, items }));
+  }, [tableData, groupBy]);
 
   // --- create handler passed to dialog ---
   async function handleCreate(form: NewOrgForm) {
-    // Send NAMES; backend maps to IDs
     const payload = {
       p_tenant_name: form.name.trim(),
       p_country_name: form.country.trim(),
@@ -139,17 +189,19 @@ export default function OrganizationsPage() {
 
     const body = await res.json().catch(() => ({}));
     if (!res.ok) {
-      throw new Error(body?.error || `Create failed (upstream ${body?.upstreamStatus ?? res.status})`);
+      throw new Error(
+        body?.error ||
+          `Create failed (upstream ${body?.upstreamStatus ?? res.status})`
+      );
     }
 
-    // Refresh table + facets after creation
     const ac = new AbortController();
     try {
       setLoading(true);
       await Promise.all([loadOrganizations(ac.signal), loadFilters(ac.signal)]);
     } finally {
       setLoading(false);
-      ac.abort(); // ensure no leaks
+      ac.abort();
     }
   }
 
@@ -158,7 +210,9 @@ export default function OrganizationsPage() {
       {/* Header */}
       <div className="sticky top-0 z-20 h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex h-full w-full items-center justify-between gap-3 px-6">
-          <h1 className="text-lg font-semibold tracking-tight">List of Organizations</h1>
+          <h1 className="text-lg font-semibold tracking-tight">
+            List of Organizations
+          </h1>
 
           {/* Filters sheet (mobile) */}
           <Sheet open={openFilters} onOpenChange={setOpenFilters}>
@@ -172,7 +226,11 @@ export default function OrganizationsPage() {
                 <SheetTitle>Filters</SheetTitle>
               </SheetHeader>
               <div className="px-4 pb-6">
-                <OrgFilters value={filters} onChange={setFilters} data={facets} />
+                <OrgFilters
+                  value={filters}
+                  onChange={setFilters}
+                  data={facets}
+                />
               </div>
             </SheetContent>
           </Sheet>
@@ -184,22 +242,42 @@ export default function OrganizationsPage() {
         {/* Sidebar filters (desktop) */}
         <aside className="col-span-12 hidden lg:col-span-3 xl:col-span-2 lg:block pt-6">
           <div className="sticky h-[calc(100vh-4rem)] overflow-hidden">
-            <OrgFilters value={filters} onChange={setFilters} data={facets} className="h-full" />
+            <OrgFilters
+              value={filters}
+              onChange={setFilters}
+              data={facets}
+              className="h-full"
+            />
           </div>
         </aside>
 
         {/* Main content: dynamic table */}
         <main className="col-span-12 lg:col-span-9 xl:col-span-10 min-h-0 overflow-auto">
           <div className="pr-5 pt-6 pb-3">
-            <OrgToolbar query={query} onQueryChange={setQuery} onNewClick={() => setOpenNew(true)} />
+            <OrgToolbar
+              query={query}
+              onQueryChange={setQuery}
+              onNewClick={() => setOpenNew(true)}
+              groupBy={groupBy} // ← pass down
+              onGroupByChange={setGroupBy} // ← pass down
+            />
           </div>
 
           {loading ? (
-            <div className="rounded-md border px-5 py-6 text-sm text-muted-foreground">Loading organizations…</div>
+            <div className="rounded-md border px-5 py-6 text-sm text-muted-foreground">
+              Loading organizations…
+            </div>
           ) : err ? (
-            <div className="rounded-md border px-5 py-6 text-sm text-red-600">Failed to load organizations: {err}</div>
+            <div className="rounded-md border px-5 py-6 text-sm text-red-600">
+              Failed to load organizations: {err}
+            </div>
           ) : (
-            <OrgResults data={tableData} defaultView="table" />
+            <OrgResults
+              data={tableData}
+              grouped={grouped} // ← grouped sections
+              groupBy={groupBy} // ← which field
+              defaultView="table"
+            />
           )}
         </main>
       </div>

@@ -1,5 +1,6 @@
-// src/app/api/filters/route.ts
-export const dynamic = "force-static";
+
+export const runtime = "nodejs";
+
 
 import { NextResponse } from "next/server";
 

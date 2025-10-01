@@ -162,7 +162,7 @@ export default function OrganizationsPage() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-[320px] p-0">
-                <SheetHeader className="px-4 py-4"><SheetTitle>Filters</SheetTitle></SheetHeader>
+                <SheetHeader className="px-4 py-4"><SheetTitle></SheetTitle></SheetHeader>
                 <div className="px-4 pb-6"><OrgFilters value={filters} onChange={setFilters} data={facets} /></div>
               </SheetContent>
             </Sheet>

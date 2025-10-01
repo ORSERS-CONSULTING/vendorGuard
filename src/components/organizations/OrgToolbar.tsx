@@ -2,7 +2,21 @@
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Plus, List, Table2, Download, Filter, X } from "lucide-react";
+import {
+  Plus,
+  List,
+  Table2,
+  Download,
+  Filter,
+  Layers,
+  Check,
+} from "lucide-react";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 type GroupKey = "none" | "status" | "plan" | "country" | "type";
 
@@ -22,13 +36,13 @@ type Props = {
   chips?: { label: string; onClear: () => void }[];
 };
 
-const GROUP_OPTIONS: Array<{ key: GroupKey; label: string }> = [
-  { key: "none", label: "None" },
-  { key: "status", label: "Status" },
-  { key: "plan", label: "Plan" },
-  { key: "country", label: "Country" },
-  { key: "type", label: "Type" },
-];
+const GROUP_LABELS: Record<GroupKey, string> = {
+  none: "No groups",
+  status: "Status",
+  plan: "Plan",
+  country: "Country",
+  type: "Type",
+};
 
 export function OrgToolbar({
   query,
@@ -44,9 +58,9 @@ export function OrgToolbar({
 }: Props) {
   return (
     <div className="space-y-2">
-      {/* one row, with generous gaps between clusters */}
-      <div className="flex flex-wrap items-center gap-y-2">
-        {/* Search (kept small) */}
+      {/* single row with larger spacing between clusters */}
+      <div className="flex flex-wrap items-center gap-y-2 w-full">
+        {/* 1) Search – small */}
         <div className="mr-12">
           <Input
             type="search"
@@ -58,73 +72,37 @@ export function OrgToolbar({
           />
         </div>
 
-        {/* Group pills */}
-        <div className="flex items-center gap-2 mr-12">
-          <span className="hidden md:inline text-xs text-muted-foreground mr-1">
-            Group
-          </span>
-          {GROUP_OPTIONS.map(({ key, label }) => (
-            <Button
-              key={key}
-              type="button"
-              size="sm"
-              variant={groupBy === key ? "default" : "outline"}
-              className="h-8 px-2 text-xs"
-              onClick={() => onGroupByChange?.(key)}
-              aria-pressed={groupBy === key}
-            >
-              {label}
-            </Button>
-          ))}
-          {groupBy !== "none" && (
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              className="h-8 px-2"
-              onClick={() => onGroupByChange?.("none")}
-              title="Clear grouping"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+        {/* 2) Group + Filters (together) */}
+        <div className="flex items-center gap-6 mr-12">
+          {/* Group popover: shows current selection; menu on click */}
+          
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 gap-2">
+                <Layers className="h-4 w-4" />
+                <span className="hidden sm:inline">
+                  {GROUP_LABELS[groupBy]}
+                </span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-44 p-1" align="start">
+              {(
+                ["none", "status", "plan", "country", "type"] as GroupKey[]
+              ).map((k) => (
+                <button
+                  key={k}
+                  onClick={() => onGroupByChange?.(k)}
+                  className={cn(
+                    "flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-sm hover:bg-muted"
+                  )}
+                >
+                  <span>{GROUP_LABELS[k]}</span>
+                  {groupBy === k && <Check className="h-4 w-4" />}
+                </button>
+              ))}
+            </PopoverContent>
+          </Popover>
 
-        {/* View toggle */}
-        <div className="inline-flex rounded-md border bg-background p-0.5 mr-12">
-          <Button
-            type="button"
-            variant={view === "list" ? "default" : "ghost"}
-            size="sm"
-            className="h-8 px-2"
-            onClick={() => onViewChange("list")}
-            aria-pressed={view === "list"}
-          >
-            <List className="h-4 w-4" />
-          </Button>
-          <Button
-            type="button"
-            variant={view === "table" ? "default" : "ghost"}
-            size="sm"
-            className="h-8 px-2"
-            onClick={() => onViewChange("table")}
-            aria-pressed={view === "table"}
-          >
-            <Table2 className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* Export + More filters */}
-        <div className="flex items-center gap-2 mr-12">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-8"
-            onClick={onExport}
-          >
-            <Download className="h-4 w-4 mr-1" /> Export
-          </Button>
           <Button
             type="button"
             variant="outline"
@@ -132,11 +110,51 @@ export function OrgToolbar({
             className="h-8"
             onClick={onOpenFilters}
           >
-            <Filter className="h-4 w-4 mr-1" /> More filters
+            <Filter className="h-4 w-4 mr-1" />
+            More filters
           </Button>
         </div>
 
-        {/* Push the CTA all the way right */}
+        {/* 3) Table/View + Export (next to each other) */}
+        <div className="flex items-center gap-6 mr-8">
+          <div className="inline-flex rounded-md border bg-background p-0.5">
+            <Button
+              type="button"
+              variant={view === "list" ? "default" : "ghost"}
+              size="sm"
+              className="h-8 px-2"
+              onClick={() => onViewChange("list")}
+              aria-pressed={view === "list"}
+              title="List view"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+            <Button
+              type="button"
+              variant={view === "table" ? "default" : "ghost"}
+              size="sm"
+              className="h-8 px-2"
+              onClick={() => onViewChange("table")}
+              aria-pressed={view === "table"}
+              title="Table view"
+            >
+              <Table2 className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8"
+            onClick={onExport}
+          >
+            <Download className="h-4 w-4 mr-1" />
+            Export
+          </Button>
+        </div>
+
+        {/* 4) New Organization pinned right */}
         <div className="ml-auto">
           <Button type="button" onClick={onNewClick} size="sm" className="h-8">
             <Plus className="mr-2 h-4 w-4" />
@@ -145,7 +163,7 @@ export function OrgToolbar({
         </div>
       </div>
 
-      {/* chips row */}
+      {/* chips row (unchanged) */}
       {(chips.length > 0 || groupBy !== "none") && (
         <div className="flex flex-wrap items-center gap-1.5">
           {chips.map((c, i) => (

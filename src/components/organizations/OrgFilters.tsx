@@ -79,17 +79,23 @@ function Section({
   }, [items, q]);
 
   const visible = expanded ? filtered : filtered.slice(0, defaultVisible);
-
   const selCount = selected.size;
 
   return (
     <section>
-      {/* Section header (collapsible) */}
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-2 py-2"
+      {/* Section header (collapsible) — NOT a <button> to avoid nested buttons */}
+      <div
+        role="button"
         aria-expanded={open}
+        tabIndex={0}
+        onClick={() => setOpen((v) => !v)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setOpen((v) => !v);
+          }
+        }}
+        className="flex w-full items-center justify-between gap-2 py-2 cursor-pointer select-none"
       >
         <div className="flex items-center gap-2">
           <ChevronDown
@@ -98,9 +104,7 @@ function Section({
               open ? "rotate-0" : "-rotate-90"
             )}
           />
-          <h4 className="text-sm font-medium text-muted-foreground">
-            {title}
-          </h4>
+        <h4 className="text-sm font-medium text-muted-foreground">{title}</h4>
           {selCount > 0 && (
             <span className="text-xs text-muted-foreground">({selCount})</span>
           )}
@@ -112,7 +116,7 @@ function Section({
             variant="ghost"
             size="sm"
             onClick={(e) => {
-              e.stopPropagation();
+              e.stopPropagation(); // don't toggle the section
               onClear();
             }}
             className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
@@ -120,7 +124,7 @@ function Section({
             Clear
           </Button>
         )}
-      </button>
+      </div>
 
       {/* Content */}
       {open && (
@@ -159,9 +163,7 @@ function Section({
               );
             })}
             {!filtered.length && (
-              <div className="py-2 text-xs text-muted-foreground">
-                No results.
-              </div>
+              <div className="py-2 text-xs text-muted-foreground">No results.</div>
             )}
           </div>
 
@@ -204,8 +206,14 @@ export function OrgFilters({ value, onChange, data, className }: Props) {
     onChange({ ...value, [key]: new Set() });
 
   return (
-    <Card className={cn("h-full border-border/60 shadow-none", className)}>
-      <div className="flex h-full flex-col">
+    <Card
+      className={cn(
+        // Ensure it can scroll within sheets/sidebars without overflowing viewport
+        "h-full max-h-[calc(100vh-2rem)] border-border/60 shadow-none",
+        className
+      )}
+    >
+      <div className="flex h-full min-h-0 flex-col">
         {/* Sticky header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80">
           <div className="text-base font-medium">Filters</div>
@@ -213,7 +221,7 @@ export function OrgFilters({ value, onChange, data, className }: Props) {
         </div>
 
         {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-4">
           <div className="space-y-3">
             <Section
               title="Organization Type"
@@ -232,8 +240,8 @@ export function OrgFilters({ value, onChange, data, className }: Props) {
               onToggle={(v) => toggle("industries", v)}
               onClear={() => clearSection("industries")}
               defaultVisible={10}
-              searchable                        // <— inline search for long list
-              defaultOpen={false}               // <— starts collapsed
+              searchable
+              defaultOpen={false}
             />
             <Separator />
 

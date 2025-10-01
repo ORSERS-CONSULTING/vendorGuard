@@ -117,15 +117,24 @@ function GroupSection({ label, count, children }:{
 
 function ListView({ data }: { data: Organization[] }) {
   if (!data?.length) {
-    return <div className="px-5 py-8 text-center text-sm text-muted-foreground">No organizations match your filters.</div>;
+    return (
+      <div className="px-5 py-8 text-center text-sm text-muted-foreground">
+        No organizations match your filters.
+      </div>
+    );
   }
+
   return (
     <div className="px-5 py-3">
-      <ul className="space-y-2.5">
+      <ul className="space-y-2">
         {data.map((o) => (
-          <li key={o.code} className="rounded-md border border-border/60 bg-background px-4 py-2.5 hover:bg-muted/40">
-            <div className="grid grid-cols-[1fr_auto] items-center gap-3">
-              <div className="flex min-w-0 items-center gap-2">
+          <li
+            key={o.code}
+            className="rounded-md border border-border/60 bg-background px-3 py-2 hover:bg-muted/40"
+          >
+            <div className="grid grid-cols-12 items-center gap-2 md:gap-3">
+              {/* Left cluster: status • name • code */}
+              <div className="col-span-12 md:col-span-5 flex min-w-0 items-center gap-2">
                 <StatusDot status={o.status} />
                 <a
                   href={`/organizations/${encodeURIComponent(String(o.code))}`}
@@ -134,19 +143,31 @@ function ListView({ data }: { data: Organization[] }) {
                 >
                   {o.name ?? "—"}
                 </a>
+                <span className="shrink-0 rounded border px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
+                  {o.code}
+                </span>
               </div>
-              <div className="justify-self-end">
+
+              {/* Middle cluster: type • industry • country */}
+              <div className="col-span-12 md:col-span-4 min-w-0 text-xs text-muted-foreground">
+                <div className="flex min-w-0 items-center gap-1">
+                  <span className="truncate">{o.type ?? "—"}</span>
+                  <span className="mx-1">•</span>
+                  <span className="truncate">{o.industry ?? "—"}</span>
+                  <span className="mx-1">•</span>
+                  <span className="truncate">{o.country ?? "—"}</span>
+                </div>
+              </div>
+
+              {/* Right cluster: plan • admin */}
+              <div className="col-span-12 md:col-span-3 flex items-center justify-between md:justify-end gap-2">
                 <PlanBadge plan={o.plan} />
-              </div>
-            </div>
-            <div className="mt-1 grid grid-cols-[1fr_auto] items-center gap-3 text-xs text-muted-foreground">
-              <div className="min-w-0 truncate">
-                <span className="font-mono">{o.code}</span>
-                <span className="mx-2">•</span>
-                <span className="truncate">{o.country ?? "—"}</span>
-              </div>
-              <div className="hidden max-w-[240px] truncate md:block" title={String(o.admin ?? "")}>
-                {o.admin ?? "—"}
+                <span
+                  className="hidden md:inline max-w-[200px] truncate text-xs text-muted-foreground"
+                  title={String(o.admin ?? "")}
+                >
+                  {o.admin ?? "—"}
+                </span>
               </div>
             </div>
           </li>
@@ -155,6 +176,7 @@ function ListView({ data }: { data: Organization[] }) {
     </div>
   );
 }
+
 
 /* ----------------------------- Table View ---------------------------- */
 /* FULL columns restored */

@@ -9,7 +9,6 @@ const BASE = process.env.ORDS_BASE_URL!;
 const headers: Record<string, string> = { Accept: "application/json" };
 if (process.env.ORDS_BEARER)
   headers.Authorization = `Bearer ${process.env.ORDS_BEARER}`;
-
 function sha256HexUpper(s: string) {
   return crypto
     .createHash("sha256")

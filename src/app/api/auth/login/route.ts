@@ -1,7 +1,6 @@
 // export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { createJWT, authCookie, type Session } from "@/lib/auth";

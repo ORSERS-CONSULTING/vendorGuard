@@ -9,7 +9,12 @@ import { StatusDot } from "./StatusDot";
 import { PlanBadge } from "./PlanBadge";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 
@@ -24,10 +29,15 @@ export function OrgResults({
   defaultView = "table",
   className,
   // pagination
-  page, pageSize, total,
-  onPageChange, onPageSizeChange,
+  page,
+  pageSize,
+  total,
+  onPageChange,
+  onPageSizeChange,
   // view control + export (lifted to toolbar)
-  view, onViewChange, onExport,
+  view,
+  onViewChange,
+  onExport,
 }: {
   data: Organization[];
   grouped?: Grouped | null;
@@ -49,12 +59,17 @@ export function OrgResults({
   const _view = view ?? defaultView;
 
   return (
-    <Card className={cn("overflow-hidden border-border/60 shadow-none", className)}>
+    <Card
+      className={cn("overflow-hidden border-border/60 shadow-none", className)}
+    >
       {/* results */}
-      {groupBy !== "none" && grouped
-        ? <GroupedResults groups={grouped} view={_view} />
-        : (_view === "list" ? <ListView data={data} /> : <TableView data={data} />)
-      }
+      {groupBy !== "none" && grouped ? (
+        <GroupedResults groups={grouped} view={_view} />
+      ) : _view === "list" ? (
+        <ListView data={data} />
+      ) : (
+        <TableView data={data} />
+      )}
 
       {/* pagination (hide when grouped) */}
       {groupBy === "none" && (
@@ -84,15 +99,25 @@ function GroupedResults({ groups, view }: { groups: Grouped; view: ViewMode }) {
     <div className="divide-y">
       {groups.map((g) => (
         <GroupSection key={g.label} label={g.label} count={g.count}>
-          {view === "list" ? <ListView data={g.items} /> : <TableView data={g.items} full /> }
+          {view === "list" ? (
+            <ListView data={g.items} />
+          ) : (
+            <TableView data={g.items} full />
+          )}
         </GroupSection>
       ))}
     </div>
   );
 }
 
-function GroupSection({ label, count, children }:{
-  label: string; count: number; children: React.ReactNode;
+function GroupSection({
+  label,
+  count,
+  children,
+}: {
+  label: string;
+  count: number;
+  children: React.ReactNode;
 }) {
   const [open, setOpen] = React.useState(true);
   return (
@@ -103,7 +128,12 @@ function GroupSection({ label, count, children }:{
         aria-expanded={open}
       >
         <div className="flex items-center gap-2">
-          <ChevronDown className={cn("h-4 w-4 transition-transform", open ? "rotate-0" : "-rotate-90")} />
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 transition-transform",
+              open ? "rotate-0" : "-rotate-90"
+            )}
+          />
           <span className="font-medium">{label || "—"}</span>
           <span className="text-xs text-muted-foreground">({count})</span>
         </div>
@@ -177,11 +207,16 @@ function ListView({ data }: { data: Organization[] }) {
   );
 }
 
-
 /* ----------------------------- Table View ---------------------------- */
 /* FULL columns restored */
 
-function TableView({ data, full = true }: { data: Organization[]; full?: boolean }) {
+function TableView({
+  data,
+  full = true,
+}: {
+  data: Organization[];
+  full?: boolean;
+}) {
   return (
     <div className="overflow-x-auto px-5 py-3">
       <Table className="min-w-[1100px] text-sm">
@@ -209,17 +244,28 @@ function TableView({ data, full = true }: { data: Organization[]; full?: boolean
               </TableCell>
               <TableCell>{o.type ?? "—"}</TableCell>
               <TableCell>{o.industry ?? "—"}</TableCell>
-              <TableCell><PlanBadge plan={o.plan} /></TableCell>
+              <TableCell>
+                <PlanBadge plan={o.plan} />
+              </TableCell>
               <TableCell>{o.country ?? "—"}</TableCell>
               <TableCell className="truncate">{o.admin ?? "—"}</TableCell>
-              <TableCell><StatusDot status={o.status} /></TableCell>
-              <TableCell className="whitespace-nowrap">{o.timezone ?? "—"}</TableCell>
-              <TableCell className="whitespace-nowrap">{o.currency ?? "—"}</TableCell>
+              <TableCell>
+                <StatusDot status={o.status} />
+              </TableCell>
+              <TableCell className="whitespace-nowrap">
+                {o.timezone ?? "—"}
+              </TableCell>
+              <TableCell className="whitespace-nowrap">
+                {o.currency ?? "—"}
+              </TableCell>
             </TableRow>
           ))}
           {!data.length && (
             <TableRow>
-              <TableCell colSpan={10} className="py-12 text-center text-sm text-muted-foreground">
+              <TableCell
+                colSpan={10}
+                className="py-12 text-center text-sm text-muted-foreground"
+              >
                 No organizations match your filters.
               </TableCell>
             </TableRow>
@@ -233,9 +279,15 @@ function TableView({ data, full = true }: { data: Organization[]; full?: boolean
 /* ----------------------------- Pagination ---------------------------- */
 
 function PaginationFooter({
-  page, pageSize, total, onPageChange, onPageSizeChange,
+  page,
+  pageSize,
+  total,
+  onPageChange,
+  onPageSizeChange,
 }: {
-  page: number; pageSize: number; total: number;
+  page: number;
+  pageSize: number;
+  total: number;
   onPageChange: (p: number) => void;
   onPageSizeChange: (n: number) => void;
 }) {
@@ -253,19 +305,35 @@ function PaginationFooter({
           onChange={(e) => onPageSizeChange(Number(e.target.value))}
         >
           {[10, 20, 50, 100].map((n) => (
-            <option key={n} value={n}>{n}</option>
+            <option key={n} value={n}>
+              {n}
+            </option>
           ))}
         </select>
         <span className="text-muted-foreground">entries</span>
       </div>
 
       <div className="flex items-center gap-4">
-        <span className="text-muted-foreground">Page {page} of {pages}</span>
+        <span className="text-muted-foreground">
+          Page {page} of {pages}
+        </span>
         <div className="flex items-center gap-1">
-          <Button variant="outline" size="icon" className="h-8 w-8" onClick={prev} disabled={page <= 1}>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={prev}
+            disabled={page <= 1}
+          >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon" className="h-8 w-8" onClick={next} disabled={page >= pages}>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={next}
+            disabled={page >= pages}
+          >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>

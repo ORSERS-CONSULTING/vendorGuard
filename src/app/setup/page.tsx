@@ -117,31 +117,31 @@ export default function SetupPage() {
     reader.readAsDataURL(file);
   }
 
-async function onSubmit() {
-  setSubmitting(true);
-  try {
-    const res = await fetch("/api/setup", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(state), // send your reducer state as-is
-    });
+  async function onSubmit() {
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/setup", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(state), // send your reducer state as-is
+      });
 
-    const j = await res.json().catch(() => ({}));
+      const j = await res.json().catch(() => ({}));
 
-    if (!res.ok) {
-      console.error("Save failed:", j);
-      alert(j?.error ?? "Could not save setup");
-      return;
+      if (!res.ok) {
+        console.error("Save failed:", j);
+        alert(j?.error ?? "Could not save setup");
+        return;
+      }
+
+      // success — go to organizations (your existing Link also does this)
+      window.location.replace("/");
+    } catch (e: any) {
+      alert(e?.message ?? "Network error");
+    } finally {
+      setSubmitting(false);
     }
-
-    // success — go to organizations (your existing Link also does this)
-    window.location.replace("/organizations");
-  } catch (e: any) {
-    alert(e?.message ?? "Network error");
-  } finally {
-    setSubmitting(false);
   }
-}
 
   const completedCount = steps.filter((s) => s.done).length;
 
@@ -151,7 +151,7 @@ async function onSubmit() {
       <header className="sticky top-0 z-30 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex h-14 items-center justify-between px-6">
           <div className="flex items-center gap-3">
-                              <AppMenu />
+            <AppMenu />
 
             <div>
               <p className="text-xs text-muted-foreground">Welcome to</p>

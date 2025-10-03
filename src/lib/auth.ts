@@ -1,8 +1,11 @@
+// lib/auth.ts
 import { SignJWT, jwtVerify } from "jose";
 
 const SECRET = new TextEncoder().encode(process.env.AUTH_SECRET!);
 
-export type Role = "SUPER_ADMIN" | "TENANT";
+// App roles (add more if needed)
+export type Role = "SUPER_ADMIN" | "OWNER" | "TENANT" | "ADMIN";
+
 export type Session = {
   sub: string;          // user_id
   email: string;
@@ -24,9 +27,11 @@ export async function verifyJWT(token: string) {
   return payload as Session;
 }
 
+export const COOKIE_NAME = "vg.session";
+
 export function authCookie() {
   return {
-    name: "vg.session",
+    name: COOKIE_NAME,
     options: {
       httpOnly: true,
       sameSite: "lax" as const,
@@ -35,4 +40,9 @@ export function authCookie() {
       maxAge: 60 * 60 * 8, // 8h
     },
   };
+}
+
+// Where should this role land after auth?
+export function homeForRole(role: Role) {
+  return role === "SUPER_ADMIN" || role === "OWNER" ? "/organizations" : "/setup";
 }

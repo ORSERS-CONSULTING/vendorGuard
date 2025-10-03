@@ -25,6 +25,7 @@ import {
 
 import options from "@/lib/data.json";
 import { initialState, setupReducer } from "@/lib/setup-reducer";
+import { AppMenu } from "@/components/AppMenu";
 
 function Field({
   id,
@@ -116,13 +117,31 @@ export default function SetupPage() {
     reader.readAsDataURL(file);
   }
 
-  async function onSubmit() {
-    setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 600));
-    console.log("SETUP_PAYLOAD", state);
+async function onSubmit() {
+  setSubmitting(true);
+  try {
+    const res = await fetch("/api/setup", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(state), // send your reducer state as-is
+    });
+
+    const j = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      console.error("Save failed:", j);
+      alert(j?.error ?? "Could not save setup");
+      return;
+    }
+
+    // success — go to organizations (your existing Link also does this)
+    window.location.replace("/organizations");
+  } catch (e: any) {
+    alert(e?.message ?? "Network error");
+  } finally {
     setSubmitting(false);
-    alert("Setup saved (frontend only). Check console for payload.");
   }
+}
 
   const completedCount = steps.filter((s) => s.done).length;
 
@@ -132,9 +151,8 @@ export default function SetupPage() {
       <header className="sticky top-0 z-30 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex h-14 items-center justify-between px-6">
           <div className="flex items-center gap-3">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary">
-              <ShieldCheck className="h-4 w-4" />
-            </div>
+                              <AppMenu />
+
             <div>
               <p className="text-xs text-muted-foreground">Welcome to</p>
               <h1 className="text-base font-semibold tracking-tight">

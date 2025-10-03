@@ -39,8 +39,20 @@ export default function Login({ nextPath = null }: LoginProps) {
         return;
       }
 
-      // Redirect to ?next=… if provided (internal paths only), else fallback
-      const dest = nextPath && nextPath.startsWith("/") ? nextPath : "/organizations";
+      // --- minimal, necessary log ---
+      const apiRedirect = typeof j?.redirect === "string" ? j.redirect : null;
+      const clientNext =
+        nextPath && nextPath.startsWith("/") ? nextPath : null;
+      const dest = clientNext ?? apiRedirect ?? "/organizations";
+
+      console.log("[Auth] redirect decision:", {
+        apiRedirect,       // from API (homeForRole)
+        clientNext,        // from ?next=
+        finalDest: dest,   // where we'll navigate
+        user: j?.user,     // includes role/tenantId/email from API
+      });
+      // --- end log ---
+
       router.replace(dest);
     } catch (e: any) {
       setErr(e?.message ?? "Login failed");
@@ -75,15 +87,23 @@ export default function Login({ nextPath = null }: LoginProps) {
 
       {/* Mobile banner */}
       <div className="relative order-1 h-40 md:hidden overflow-hidden">
-        <Image src="/vendorguard.png" alt="VendorGuard" fill className="object-cover" priority />
+        <Image
+          src="/vendorguard.png"
+          alt="VendorGuard"
+          fill
+          className="object-cover"
+          priority
+        />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/30 to-transparent" />
       </div>
 
       {/* RIGHT: form */}
       <div className="order-2 flex items-center justify-center bg-background px-6 py-10 md:px-12">
-        <div className="w/full max-w-sm border py-6 px-6 rounded-2xl shadow-md backdrop-blur-2xl">
+        <div className="w-full max-w-sm border py-6 px-6 rounded-2xl shadow-md backdrop-blur-2xl">
           <h1 className="mt-2 text-3xl font-semibold">Sign in</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Welcome back! Please enter your details.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Welcome back! Please enter your details.
+          </p>
 
           <form className="mt-8 space-y-4" onSubmit={onSubmit}>
             <div className="space-y-2">
@@ -128,7 +148,11 @@ export default function Login({ nextPath = null }: LoginProps) {
               </div>
             )}
 
-            <Button type="submit" className="mt-2 h-11 w-full rounded-xl" disabled={loading}>
+            <Button
+              type="submit"
+              className="mt-2 h-11 w-full rounded-xl"
+              disabled={loading}
+            >
               {loading ? "Signing in…" : "Sign in"}
             </Button>
           </form>

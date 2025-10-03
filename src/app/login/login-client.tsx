@@ -9,15 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 
-const PUBLIC_DESTS = new Set(["/", "/login", "/privacy", "/terms"]);
-
-export default function Login({ nextPath }: { nextPath: string | null }) {
+export default function Login() {
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
   const router = useRouter();
 
   async function onSubmit(e: React.FormEvent) {
@@ -29,6 +26,7 @@ export default function Login({ nextPath }: { nextPath: string | null }) {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ email, password: pw }),
+        credentials: "include",
       });
 
       const j = await res.json().catch(() => ({}));
@@ -37,14 +35,8 @@ export default function Login({ nextPath }: { nextPath: string | null }) {
         return;
       }
 
-      const role = j?.user?.role;
-      const dashboard = role === "SUPER_ADMIN" ? "/admin" : "/organizations";
-
-      // Use nextPath only if it exists and isn't a public/landing route
-      const dest =
-        nextPath && !PUBLIC_DESTS.has(nextPath) ? nextPath : dashboard;
-
-      router.replace(dest);
+      // HARD REDIRECT: always go to /organizations
+      router.replace("/organizations");
     } catch (e: any) {
       setErr(e?.message ?? "Login failed");
     } finally {
@@ -78,7 +70,13 @@ export default function Login({ nextPath }: { nextPath: string | null }) {
 
       {/* Mobile banner */}
       <div className="relative order-1 h-40 md:hidden overflow-hidden">
-        <Image src="/vendorguard.png" alt="VendorGuard" fill className="object-cover" priority />
+        <Image
+          src="/vendorguard.png"
+          alt="VendorGuard"
+          fill
+          className="object-cover"
+          priority
+        />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/30 to-transparent" />
       </div>
 
@@ -133,7 +131,11 @@ export default function Login({ nextPath }: { nextPath: string | null }) {
               </div>
             )}
 
-            <Button type="submit" className="mt-2 h-11 w-full rounded-xl" disabled={loading}>
+            <Button
+              type="submit"
+              className="mt-2 h-11 w-full rounded-xl"
+              disabled={loading}
+            >
               {loading ? "Signing in…" : "Sign in"}
             </Button>
           </form>

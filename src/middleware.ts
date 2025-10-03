@@ -1,53 +1,60 @@
+// middleware.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { verifyJWT } from "./lib/auth"; // MUST be Edge-safe (jose/WebCrypto)
-
-const COOKIE = "vg.session";
+import { verifyJWT, COOKIE_NAME, homeForRole } from "./lib/auth";
 
 const PUBLIC_PATHS = new Set<string>([
-  "/", "/login", "/privacy", "/terms", "/api/auth",
+  "/",
+  "/login",
+  "/privacy",
+  "/terms",
+  "/setpassword", // activation page is public
 ]);
 
 export async function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl;
+  const url = req.nextUrl;
+  const path = (url.pathname.replace(/\/+$/, "") || "/").toLowerCase();
 
-  // allow public paths and /api/auth/*
-  if (PUBLIC_PATHS.has(pathname) || pathname.startsWith("/api/auth/")) {
+  // Always allow auth APIs (login, logout, activate proxy, etc.)
+  if (path.startsWith("/api/auth/")) return NextResponse.next();
+
+  // Public pages
+  if (PUBLIC_PATHS.has(path)) {
+    // If it's the bare home and the user is already logged in, send them to their area
+    if (path === "/") {
+      const token = req.cookies.get(COOKIE_NAME)?.value;
+      if (token) {
+        try {
+          const session = await verifyJWT(token);
+          const redirectUrl = url.clone();
+          redirectUrl.pathname = homeForRole(session.role); // ✅ always one of the two
+          return NextResponse.redirect(redirectUrl);
+        } catch {
+          // invalid/expired token → fall through to public home
+        }
+      }
+    }
+
     return NextResponse.next();
   }
 
-  // read token for protected paths
-  const token = req.cookies.get(COOKIE)?.value;
+  // Protected beyond this point
+  const token = req.cookies.get(COOKIE_NAME)?.value;
   if (!token) {
-    const url = req.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("next", pathname);
-    return NextResponse.redirect(url);
+    const redirectUrl = url.clone();
+    redirectUrl.pathname = "/login";
+    redirectUrl.searchParams.set("next", url.pathname + (url.search || ""));
+    return NextResponse.redirect(redirectUrl);
   }
 
   try {
-    const session = await verifyJWT(token); // Edge-safe implementation
-    const isSuper = session.role === "SUPER_ADMIN";
-
-    // if an authenticated user hits /login, send them to their dashboard (nice UX)
-    if (pathname === "/login") {
-      const url = req.nextUrl.clone();
-      url.pathname = isSuper ? "/admin" : "/organizations";
-      return NextResponse.redirect(url);
-    }
-
-    // block tenants from /admin
-    if (pathname.startsWith("/admin") && !isSuper) {
-      const url = req.nextUrl.clone();
-      url.pathname = "/organizations";
-      return NextResponse.redirect(url);
-    }
-
+    await verifyJWT(token);
     return NextResponse.next();
   } catch {
-    const url = req.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
+    const redirectUrl = url.clone();
+    redirectUrl.pathname = "/login";
+    redirectUrl.searchParams.set("next", url.pathname + (url.search || ""));
+    return NextResponse.redirect(redirectUrl);
   }
 }
 

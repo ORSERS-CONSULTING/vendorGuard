@@ -1,13 +1,8 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
+import { motion } from "framer-motion";
 
 type LoginProps = {
   nextPath?: string | null;
@@ -39,7 +34,7 @@ export default function Login({ nextPath = null }: LoginProps) {
         return;
       }
 
-      // --- minimal, necessary log ---
+      // --- minimal, necessary log (same as your old code) ---
       const apiRedirect = typeof j?.redirect === "string" ? j.redirect : null;
       const clientNext =
         nextPath && nextPath.startsWith("/") ? nextPath : null;
@@ -62,83 +57,73 @@ export default function Login({ nextPath = null }: LoginProps) {
   }
 
   return (
-    <div className="grid min-h-[100dvh] grid-rows-[auto,1fr] md:grid-cols-2 md:grid-rows-1">
-      {/* LEFT: brand image */}
-      <div className="relative hidden md:block">
-        <Card className="border-0 bg-gradient-to-b from-white to-muted/50 shadow-md ring-1 ring-border">
-          <CardContent className="p-0">
-            <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl">
-              <div className="absolute inset-0 bg-[radial-gradient(1200px_300px_at_50%_-10%,_oklch(var(--primary)/.12),_transparent)]" />
-              <div className="absolute inset-0 grid place-items-center text-muted-foreground">
-                <img src="/vendorguard.png" alt="vendorguard image" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <div className="absolute inset-0 bg-gradient-to-tr from-black/60 via-black/25 to-transparent" />
-        <div className="absolute inset-0 bg-[radial-gradient(800px_300px_at_70%_20%,_oklch(var(--primary)/.22),_transparent_70%)]" />
-        <div className="absolute bottom-10 left-10 right-10 max-w-sm text-white">
-          <h2 className="text-2xl font-semibold">VendorGuard</h2>
-          <p className="mt-2 text-sm/6 text-white/80">
-            Evaluate, onboard, and monitor vendors with confidence.
-          </p>
-        </div>
-      </div>
+    <div className="flex h-screen w-screen">
+      {/* Left Column - Login Form */}
+      <div className="flex w-full flex-col justify-center bg-white p-16 lg:w-1/2">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          {/* Refined Logo */}
+          <div className="mb-10 flex items-center gap-3">
+            <svg
+              className="h-12 w-12 flex-shrink-0 text-sky-700"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+            >
+              <path d="M12 3l7 3v5c0 5-3.5 9-7 10-3.5-1-7-5-7-10V6l7-3z" fill="currentColor" />
+              <path d="M9 12l2 2 4-4" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <h1 className="text-5xl font-bold leading-tight text-sky-900">
+              Vendor<span className="text-sky-700">Guard</span>
+            </h1>
+          </div>
 
-      {/* Mobile banner */}
-      <div className="relative order-1 h-40 md:hidden overflow-hidden">
-        <Image
-          src="/vendorguard.png"
-          alt="VendorGuard"
-          fill
-          className="object-cover"
-          priority
-        />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/30 to-transparent" />
-      </div>
-
-      {/* RIGHT: form */}
-      <div className="order-2 flex items-center justify-center bg-background px-6 py-10 md:px-12">
-        <div className="w-full max-w-sm border py-6 px-6 rounded-2xl shadow-md backdrop-blur-2xl">
-          <h1 className="mt-2 text-3xl font-semibold">Sign in</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Welcome back! Please enter your details.
+          <p className="mb-8 text-gray-600">
+            Securely manage third-party risk and approvals.
           </p>
 
-          <form className="mt-8 space-y-4" onSubmit={onSubmit}>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
+          <form className="space-y-6" onSubmit={onSubmit}>
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email
+              </label>
+              <input
                 id="email"
                 type="email"
                 autoComplete="username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className="mt-1 block w-full rounded-xl border border-gray-300 px-4 py-2 focus:border-sky-500 focus:ring-sky-500"
                 placeholder="you@company.com"
-                className="h-11 rounded-xl"
               />
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
+            <div>
+              <div className="mb-1 flex items-center justify-between">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Password
+                </label>
                 <button
                   type="button"
                   onClick={() => setShowPw((v) => !v)}
-                  className="text-xs text-[var(--primary)] hover:underline"
+                  className="text-xs text-sky-700 hover:underline"
                 >
                   {showPw ? "Hide" : "Show"}
                 </button>
               </div>
-              <Input
+              <input
                 id="password"
                 type={showPw ? "text" : "password"}
                 autoComplete="current-password"
                 value={pw}
                 onChange={(e) => setPw(e.target.value)}
                 required
-                className="h-11 rounded-xl"
+                className="mt-1 block w-full rounded-xl border border-gray-300 px-4 py-2 focus:border-sky-500 focus:ring-sky-500"
               />
             </div>
 
@@ -148,21 +133,72 @@ export default function Login({ nextPath = null }: LoginProps) {
               </div>
             )}
 
-            <Button
+            <button
               type="submit"
-              className="mt-2 h-11 w-full rounded-xl"
               disabled={loading}
+              className="w-full rounded-xl bg-sky-700 py-2 text-white shadow transition hover:bg-sky-800 disabled:opacity-60"
             >
-              {loading ? "Signing in…" : "Sign in"}
-            </Button>
+              {loading ? "Signing in…" : "Log In"}
+            </button>
           </form>
 
-          <div className="mt-4 text-right">
-            <Link href="#" className="text-xs text-[var(--primary)] hover:underline">
-              Forgot password?
-            </Link>
+          <div className="mt-6 text-sm text-gray-500">
+            Don’t have an account?{" "}
+            <a href="#" className="text-sky-600 hover:underline">
+              Sign up
+            </a>
           </div>
-        </div>
+        </motion.div>
+      </div>
+
+      {/* Right Column - Why VendorGuard */}
+      <div className="flex w-full flex-col justify-center bg-gradient-to-br from-sky-600 via-sky-700 to-indigo-800 p-16 text-white lg:w-1/2">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="max-w-md"
+        >
+          <h2 className="mb-6 text-2xl font-semibold">Why VendorGuard</h2>
+
+          <ul className="mb-6 space-y-3 text-white/90">
+            <li className="flex items-start gap-3">
+              <span className="mt-1 h-2 w-2 rounded-full bg-white/70" />
+              <span>Continuous vendor monitoring with alerts.</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="mt-1 h-2 w-2 rounded-full bg-white/70" />
+              <span>Configurable approval workflows across finance & procurement.</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="mt-1 h-2 w-2 rounded-full bg-white/70" />
+              <span>0–100 risk scoring with industry-specific criteria.</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="mt-1 h-2 w-2 rounded-full bg-white/70" />
+              <span>Audit-ready compliance reporting.</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="mt-1 h-2 w-2 rounded-full bg-white/70" />
+              <span>Seamless integration with Oracle Cloud stack.</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="mt-1 h-2 w-2 rounded-full bg-white/70" />
+              <span>Customizable dashboards & SLA tracking.</span>
+            </li>
+          </ul>
+
+          <div className="mb-6 grid grid-cols-2 gap-3 text-xs text-white/70">
+            <div className="rounded-lg border border-white/20 bg-white/10 px-3 py-2">ISO-ready controls</div>
+            <div className="rounded-lg border border-white/20 bg-white/10 px-3 py-2">Oracle Cloud native</div>
+            <div className="rounded-lg border border-white/20 bg-white/10 px-3 py-2">SLA dashboards</div>
+            <div className="rounded-lg border border-white/20 bg-white/10 px-3 py-2">Audit trails</div>
+          </div>
+
+          <p className="text-xs text-white/60">
+            * Demo environment. Use corporate SSO if enabled.
+          </p>
+        </motion.div>
       </div>
     </div>
   );

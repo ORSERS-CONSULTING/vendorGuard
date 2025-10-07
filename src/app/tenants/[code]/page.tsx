@@ -25,14 +25,17 @@ type Company = {
 async function getCompany(code: string): Promise<Company | null> {
   const url = await absUrl(`/api/organizations?code=${encodeURIComponent(code)}`);
   const res = await fetch(url, { cache: "no-store" });
-
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`Upstream ${res.status}`);
   return res.json();
 }
 
-export default async function TenantPage({ params }: { params: { code: string } }) {
-  const company = await getCompany(params.code);
+// --- Fix: params is a Promise in your PageProps --- //
+type TenantPageProps = { params: Promise<{ code: string }> };
+
+export default async function TenantPage({ params }: TenantPageProps) {
+  const { code } = await params; // <-- await the promised params
+  const company = await getCompany(code);
   if (!company) notFound();
   return <TenantScreen company={company} />;
 }

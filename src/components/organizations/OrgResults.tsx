@@ -1,7 +1,7 @@
-// src/components/organizations/OrgResults.tsx
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { Organization } from "@/lib/org";
@@ -9,12 +9,7 @@ import { StatusDot } from "./StatusDot";
 import { PlanBadge } from "./PlanBadge";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 
@@ -28,41 +23,27 @@ export function OrgResults({
   groupBy = "none",
   defaultView = "table",
   className,
-  // pagination
-  page,
-  pageSize,
-  total,
-  onPageChange,
-  onPageSizeChange,
-  // view control + export (lifted to toolbar)
-  view,
-  onViewChange,
-  onExport,
+  page, pageSize, total, onPageChange, onPageSizeChange,
+  view, onViewChange, onExport,
 }: {
   data: Organization[];
   grouped?: Grouped | null;
   groupBy?: GroupKey;
   defaultView?: ViewMode;
   className?: string;
-
   page: number;
   pageSize: number;
   total: number;
   onPageChange: (p: number) => void;
   onPageSizeChange: (n: number) => void;
-
   view: ViewMode;
   onViewChange: (v: ViewMode) => void;
   onExport: () => void;
 }) {
-  // keep local fallback if consumer forgets to pass view (but you pass it)
   const _view = view ?? defaultView;
 
   return (
-    <Card
-      className={cn("overflow-hidden border-border/60 shadow-none", className)}
-    >
-      {/* results */}
+    <Card className={cn("overflow-hidden border-border/60 shadow-none", className)}>
       {groupBy !== "none" && grouped ? (
         <GroupedResults groups={grouped} view={_view} />
       ) : _view === "list" ? (
@@ -71,7 +52,6 @@ export function OrgResults({
         <TableView data={data} />
       )}
 
-      {/* pagination (hide when grouped) */}
       {groupBy === "none" && (
         <PaginationFooter
           page={page}
@@ -89,21 +69,13 @@ export function OrgResults({
 
 function GroupedResults({ groups, view }: { groups: Grouped; view: ViewMode }) {
   if (!groups?.length) {
-    return (
-      <div className="px-5 py-12 text-center text-sm text-muted-foreground">
-        No organizations match your filters.
-      </div>
-    );
+    return <div className="px-5 py-12 text-center text-sm text-muted-foreground">No organizations match your filters.</div>;
   }
   return (
     <div className="divide-y">
       {groups.map((g) => (
         <GroupSection key={g.label} label={g.label} count={g.count}>
-          {view === "list" ? (
-            <ListView data={g.items} />
-          ) : (
-            <TableView data={g.items} full />
-          )}
+          {view === "list" ? <ListView data={g.items} /> : <TableView data={g.items} full />}
         </GroupSection>
       ))}
     </div>
@@ -111,14 +83,8 @@ function GroupedResults({ groups, view }: { groups: Grouped; view: ViewMode }) {
 }
 
 function GroupSection({
-  label,
-  count,
-  children,
-}: {
-  label: string;
-  count: number;
-  children: React.ReactNode;
-}) {
+  label, count, children,
+}: { label: string; count: number; children: React.ReactNode }) {
   const [open, setOpen] = React.useState(true);
   return (
     <section>
@@ -128,12 +94,7 @@ function GroupSection({
         aria-expanded={open}
       >
         <div className="flex items-center gap-2">
-          <ChevronDown
-            className={cn(
-              "h-4 w-4 transition-transform",
-              open ? "rotate-0" : "-rotate-90"
-            )}
-          />
+          <ChevronDown className={cn("h-4 w-4 transition-transform", open ? "rotate-0" : "-rotate-90")} />
           <span className="font-medium">{label || "—"}</span>
           <span className="text-xs text-muted-foreground">({count})</span>
         </div>
@@ -147,38 +108,31 @@ function GroupSection({
 
 function ListView({ data }: { data: Organization[] }) {
   if (!data?.length) {
-    return (
-      <div className="px-5 py-8 text-center text-sm text-muted-foreground">
-        No organizations match your filters.
-      </div>
-    );
+    return <div className="px-5 py-8 text-center text-sm text-muted-foreground">No organizations match your filters.</div>;
   }
 
   return (
     <div className="px-5 py-3">
       <ul className="space-y-2">
         {data.map((o) => (
-          <li
-            key={o.code}
-            className="rounded-md border border-border/60 bg-background px-3 py-2 hover:bg-muted/40"
-          >
+          <li key={o.code} className="rounded-md border border-border/60 bg-background px-3 py-2 hover:bg-muted/40">
             <div className="grid grid-cols-12 items-center gap-2 md:gap-3">
               {/* Left cluster: status • name • code */}
               <div className="col-span-12 md:col-span-5 flex min-w-0 items-center gap-2">
                 <StatusDot status={o.status} />
-                <a
-                  href={`/organizations/${encodeURIComponent(String(o.code))}`}
-                  title={String(o.name ?? "")}
-                  className="truncate text-sm font-medium text-primary underline-offset-4 hover:underline"
+                <Link
+                  href={`/tenants/${encodeURIComponent(String(o.code))}`}
+                  className="truncate text-primary underline-offset-4 hover:underline"
+                  title={o.name ?? ""}
                 >
                   {o.name ?? "—"}
-                </a>
+                </Link>
                 <span className="shrink-0 rounded border px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
                   {o.code}
                 </span>
               </div>
 
-              {/* Middle cluster: type • industry • country */}
+              {/* Middle cluster */}
               <div className="col-span-12 md:col-span-4 min-w-0 text-xs text-muted-foreground">
                 <div className="flex min-w-0 items-center gap-1">
                   <span className="truncate">{o.type ?? "—"}</span>
@@ -189,13 +143,10 @@ function ListView({ data }: { data: Organization[] }) {
                 </div>
               </div>
 
-              {/* Right cluster: plan • admin */}
+              {/* Right cluster */}
               <div className="col-span-12 md:col-span-3 flex items-center justify-between md:justify-end gap-2">
                 <PlanBadge plan={o.plan} />
-                <span
-                  className="hidden md:inline max-w-[200px] truncate text-xs text-muted-foreground"
-                  title={String(o.admin ?? "")}
-                >
+                <span className="hidden md:inline max-w-[200px] truncate text-xs text-muted-foreground" title={String(o.admin ?? "")}>
                   {o.admin ?? "—"}
                 </span>
               </div>
@@ -208,21 +159,13 @@ function ListView({ data }: { data: Organization[] }) {
 }
 
 /* ----------------------------- Table View ---------------------------- */
-/* FULL columns restored */
 
-function TableView({
-  data,
-  full = true,
-}: {
-  data: Organization[];
-  full?: boolean;
-}) {
+function TableView({ data, full = true }: { data: Organization[]; full?: boolean }) {
   return (
     <div className="overflow-x-auto px-5 py-3">
       <Table className="min-w-[1100px] text-sm">
         <TableHeader className="sticky top-0 z-10 bg-background">
           <TableRow className="hover:bg-transparent">
-            {/* full columns */}
             <TableHead className="w-24">Code</TableHead>
             <TableHead className="w-[260px]">Name</TableHead>
             <TableHead className="w-32">Type</TableHead>
@@ -239,33 +182,28 @@ function TableView({
           {data.map((o) => (
             <TableRow key={o.code} className="hover:bg-muted/40">
               <TableCell className="font-medium">{o.code}</TableCell>
-              <TableCell className="text-primary underline-offset-4 hover:underline cursor-pointer">
-                {o.name ?? "—"}
+              <TableCell>
+                <Link
+                  href={`/tenants/${encodeURIComponent(String(o.code))}`}
+                  className="truncate text-primary underline-offset-4 hover:underline"
+                  title={o.name ?? ""}
+                >
+                  {o.name ?? "—"}
+                </Link>
               </TableCell>
               <TableCell>{o.type ?? "—"}</TableCell>
               <TableCell>{o.industry ?? "—"}</TableCell>
-              <TableCell>
-                <PlanBadge plan={o.plan} />
-              </TableCell>
+              <TableCell><PlanBadge plan={o.plan} /></TableCell>
               <TableCell>{o.country ?? "—"}</TableCell>
               <TableCell className="truncate">{o.admin ?? "—"}</TableCell>
-              <TableCell>
-                <StatusDot status={o.status} />
-              </TableCell>
-              <TableCell className="whitespace-nowrap">
-                {o.timezone ?? "—"}
-              </TableCell>
-              <TableCell className="whitespace-nowrap">
-                {o.currency ?? "—"}
-              </TableCell>
+              <TableCell><StatusDot status={o.status} /></TableCell>
+              <TableCell className="whitespace-nowrap">{o.timezone ?? "—"}</TableCell>
+              <TableCell className="whitespace-nowrap">{o.currency ?? "—"}</TableCell>
             </TableRow>
           ))}
           {!data.length && (
             <TableRow>
-              <TableCell
-                colSpan={10}
-                className="py-12 text-center text-sm text-muted-foreground"
-              >
+              <TableCell colSpan={10} className="py-12 text-center text-sm text-muted-foreground">
                 No organizations match your filters.
               </TableCell>
             </TableRow>
@@ -279,17 +217,10 @@ function TableView({
 /* ----------------------------- Pagination ---------------------------- */
 
 function PaginationFooter({
-  page,
-  pageSize,
-  total,
-  onPageChange,
-  onPageSizeChange,
+  page, pageSize, total, onPageChange, onPageSizeChange,
 }: {
-  page: number;
-  pageSize: number;
-  total: number;
-  onPageChange: (p: number) => void;
-  onPageSizeChange: (n: number) => void;
+  page: number; pageSize: number; total: number;
+  onPageChange: (p: number) => void; onPageSizeChange: (n: number) => void;
 }) {
   const pages = Math.max(1, Math.ceil(total / pageSize));
   const prev = () => onPageChange(Math.max(1, page - 1));
@@ -305,35 +236,19 @@ function PaginationFooter({
           onChange={(e) => onPageSizeChange(Number(e.target.value))}
         >
           {[10, 20, 50, 100].map((n) => (
-            <option key={n} value={n}>
-              {n}
-            </option>
+            <option key={n} value={n}>{n}</option>
           ))}
         </select>
         <span className="text-muted-foreground">entries</span>
       </div>
 
       <div className="flex items-center gap-4">
-        <span className="text-muted-foreground">
-          Page {page} of {pages}
-        </span>
+        <span className="text-muted-foreground">Page {page} of {pages}</span>
         <div className="flex items-center gap-1">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            onClick={prev}
-            disabled={page <= 1}
-          >
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={prev} disabled={page <= 1}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            onClick={next}
-            disabled={page >= pages}
-          >
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={next} disabled={page >= pages}>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>

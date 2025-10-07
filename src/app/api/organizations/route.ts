@@ -27,32 +27,39 @@ const toOrg = (x: any): Organization => ({
   currency: x.currencyname,
 });
 
-export async function GET() {
-  if (!BASE) {
-    return NextResponse.json(
-      { error: "Missing ORDS_BASE_URL" },
-      { status: 500 }
-    );
-  }
+export async function GET(req: Request) {
+  if (!BASE) return NextResponse.json({ error: "Missing ORDS_BASE_URL" }, { status: 500 });
 
-  const res = await fetch(LIST_UPSTREAM, { headers, cache: "no-store" });
+  const url = new URL(req.url);
+  const code = url.searchParams.get("code");
+
+  // Build upstream URL with optional p_code
+  const upstream = new URL(`${LIST_UPSTREAM}`);
+  if (code) upstream.searchParams.set("p_code", code);
+
+  const res = await fetch(upstream.toString(), { headers, cache: "no-store" });
   const text = await res.text();
-
   if (!res.ok) {
     return NextResponse.json(
-      {
-        upstream: LIST_UPSTREAM,
-        upstreamStatus: res.status,
-        errorBody: text.slice(0, 2000),
-      },
+      { upstream: upstream.toString(), upstreamStatus: res.status, errorBody: text.slice(0, 1200) },
       { status: 502 }
     );
   }
 
-  const raw = JSON.parse(text) as { items: any[]; [k: string]: any };
+  const raw = JSON.parse(text);
+
+  // When p_code is sent, ORDS still returns a collection; normalize to a single object
+  if (code) {
+    const hit = (raw.items ?? []).at(0);
+    if (!hit) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json(toOrg(hit));
+  }
+
+  // List mode
   const items = Array.isArray(raw.items) ? raw.items.map(toOrg) : [];
   return NextResponse.json({ ...raw, items });
 }
+
 
 // ----- POST: create organization (send NAMES; ORDS maps to IDs) -----
 export async function POST(req: Request) {

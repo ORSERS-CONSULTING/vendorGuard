@@ -220,7 +220,6 @@ export default function Home() {
           </Card>
         </section>
       </main>
-
       {/* Footer */}
       <footer className="border-t">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6 text-sm text-muted-foreground">

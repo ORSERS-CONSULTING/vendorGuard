@@ -196,7 +196,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* CTA strip */}
         <section className="mx-auto max-w-7xl px-6 pb-16">
           <Card className="rounded-2xl bg-gradient-to-br from-background to-muted/60">
             <CardContent className="flex flex-col items-center justify-between gap-4 p-6 text-center md:flex-row md:text-left">

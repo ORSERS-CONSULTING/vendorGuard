@@ -209,7 +209,6 @@ export default function Home() {
                 </p>
               </div>
               <div className="flex gap-2">
-                {/* <Button className="rounded-xl">Start free</Button> */}
                 <Button variant="outline" className="rounded-xl" asChild>
                   <a href={LOGIN_URL} target="_self" rel="noopener noreferrer">
                     Log in
